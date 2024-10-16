@@ -7,23 +7,36 @@ import re
 #################################################
 # 0. Tạo cơ sở dữ liệu
 conn = sqlite3.connect('painters.db')
-
+c = conn.cursor()
 c.execute('''
         CREATE TABLE painter(
             id integer autoicrement,
             name text,
             birth text,
             death text,
-            nationality text,
+            nationality text
             )
     ''')
 
 def them(name, birth, death, nationality):
-    conn = sqlite3.connect('painters.db')
-    c = conn.cursor()
-    # them vao co so du lieu
-    c.execute('''
-    ''')
+    try:
+        conn = sqlite3.connect('painters.db')
+        c = conn.cursor()
+        #thêm vào cơ sở dữ liệu
+        c.execute('''
+            INSERT INTO painter(name, birth, death, nationality )
+            VALUES(:name, :birth, :death, :nationality)''', {
+                'name': name,
+                'birth': birth,
+                'death': death,
+                'nationality': nationality,
+        })
+        conn.commit()
+        print(f"Added {name} to database")
+    except Exception as e:
+        print(f"Error adding {name} to database: {e}")
+    finally:
+        conn.close()  # Đóng kết nối
 
 
 
@@ -82,7 +95,7 @@ for link in all_links:
         try:
             birth_element = driver.find_element(By.XPATH, "//th[text()='Born']/following-sibling::td")
             birth = birth_element.text
-            birth_match = re.findall(r'[0-9]{1,2}+\s+[A-Za-z]+\s+[0-9]{4}', birth)
+            birth_match = re.findall(r'[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4}', birth)
             birth = birth_match[0] if birth_match else ""
         except:
             birth = ""
@@ -91,7 +104,7 @@ for link in all_links:
         try:
             death_element = driver.find_element(By.XPATH, "//th[text()='Died']/following-sibling::td")
             death = death_element.text
-            death_match = re.findall(r'[0-9]{1,2}+\s+[A-Za-z]+\s+[0-9]{4}', death)
+            death_match = re.findall(r'[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4}', death)
             death = death_match[0] if death_match else ""
         except:
             death = ""
@@ -106,23 +119,25 @@ for link in all_links:
         # Tạo dictionary thông tin của họa sĩ
         painter = {'name': name, 'birth': birth, 'death': death, 'nationality': nationality}
 
-        # Chuyển đổi dictionary thành DataFrame và thêm vào DataFrame chính
-        painter_df = pd.DataFrame([painter])
-        d = pd.concat([d, painter_df], ignore_index=True)
+        # # Chuyển đổi dictionary thành DataFrame và thêm vào DataFrame chính
+        # painter_df = pd.DataFrame([painter])
+        # d = pd.concat([d, painter_df], ignore_index=True)
+        them(name, birth, death, nationality)
 
     except:
         print("Error")
+    # them(name, birth, death, nationality)
 
 ######################################################
-# IV. In thông tin
-print(d)
-
-# Đặt tên file
-file_name = 'Painters.xlsx'
-
-# Lưu vào file Excel
-d.to_excel(file_name, index=False)  # index=False để không lưu chỉ số
-print('DataFrame is written to Excel file successfully.')
+# # IV. In thông tin
+# print(d)
+#
+# # Đặt tên file
+# file_name = 'Painters.xlsx'
+#
+# # Lưu vào file Excel
+# d.to_excel(file_name, index=False)  # index=False để không lưu chỉ số
+# print('DataFrame is written to Excel file successfully.')
 
 # Đóng webdriver sau khi lấy thông tin
 driver.quit()
